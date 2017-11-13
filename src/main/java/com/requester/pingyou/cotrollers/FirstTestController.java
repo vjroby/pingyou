@@ -22,6 +22,8 @@ public class FirstTestController {
 
     @FXML
     private TextField retrytimes;
+    @FXML
+    private TextField retryInterval;
 
     @FXML
     private ProgressBar progress;
@@ -39,7 +41,6 @@ public class FirstTestController {
         oKAlert.show();
     }
 
-
     private void makeRequests(WebClient webClient, Alert oKAlert) {
         HttpStatus status;
         int count = 0;
@@ -49,14 +50,11 @@ public class FirstTestController {
                 status = webClient.get().exchange().block().statusCode();
                 count++;
                 log.debug("count: " + count);
+                Thread.sleep(Integer.valueOf(retryInterval.getText()) * 10000);
             }
             while (status != HttpStatus.OK && count <= Integer.valueOf(retrytimes.getText()));
 
-            if (status == HttpStatus.OK) {
-                oKAlert.setContentText("Status  ok");
-            } else {
-                oKAlert.setContentText("Status not ok");
-            }
+            setStatusText(oKAlert, status);
 
             log.debug("Status: " + status);
         } catch (Exception e) {
@@ -64,13 +62,21 @@ public class FirstTestController {
         }
     }
 
+    private void setStatusText(Alert oKAlert, HttpStatus status) {
+        if (status == HttpStatus.OK) {
+            oKAlert.setContentText("Status  ok");
+        } else {
+            oKAlert.setContentText("Status not ok");
+        }
+    }
+
     private void animateProgressBar() {
         final Float[] values = new Float[]{-1.0f, 0f, 0.6f, 1.0f};
         final ProgressIndicator pins = new ProgressIndicator(values.length);
 
-        for (int i = 0; i < values.length; i++) {
-            progress.setProgress(values[i]);
-            pins.setProgress(values[i]);
+        for (Float value : values) {
+            progress.setProgress(value);
+            pins.setProgress(value);
         }
     }
 }
