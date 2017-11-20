@@ -3,6 +3,9 @@ package com.requester.pingyou.cotrollers;
 import de.felixroske.jfxsupport.FXMLController;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -39,6 +42,36 @@ public class FirstTestController {
         animateProgressBar();
         makeRequests(webClient, oKAlert);
         oKAlert.show();
+
+
+    }
+
+    private void createPopUp() {
+        Popup popup = new Popup();
+        final Label hello = new Label();
+        final TextField name2 = new TextField();
+        Button ok = new Button("ok");
+        Button cencel = new Button("cancel");
+
+        final TextField name = new TextField();
+        Stage stageTheLabelBelongs = (Stage) button.getScene().getWindow();
+
+        VBox popUpVBox = new VBox();
+        popUpVBox.getChildren().add(hello);
+        popUpVBox.getChildren().add(name2);
+        popUpVBox.getChildren().add(ok);
+        popUpVBox.getChildren().add(cencel);
+
+        popup.getContent().addAll(name);
+        popup.getContent().addAll(popUpVBox);
+        popup.setAutoFix(false);
+        popup.setAutoHide( true );
+        popup.setHideOnEscape( true );
+        popup.setX(250);
+        popup.setY(175);
+        popup.show(stageTheLabelBelongs);
+        ok.setOnAction(t -> name.setText(name2.getText()));
+        cencel.setOnAction(t -> popup.hide());
     }
 
     private void makeRequests(WebClient webClient, Alert oKAlert) {
@@ -60,6 +93,7 @@ public class FirstTestController {
         } catch (Exception e) {
             oKAlert.setContentText("Error");
         }
+//        createPopUp();
     }
 
     private void setStatusText(Alert oKAlert, HttpStatus status) {
