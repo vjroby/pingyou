@@ -1,14 +1,15 @@
 package com.requester.pingyou.cotrollers;
 
 import de.felixroske.jfxsupport.FXMLController;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import javafx.stage.Popup;
-import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @FXMLController
@@ -31,51 +32,40 @@ public class FirstTestController {
     @FXML
     private ProgressBar progress;
 
+    private AtomicReference<String> atomicStringReference =
+            new AtomicReference<String>();
+    String response;
 
-    public void onPress() {
+
+    public void onPress() throws ExecutionException, InterruptedException {
         log.debug("Button pressed");
         infoLabel.setText("Requests are started.");
         WebClient webClient = WebClient.create(url.getText());
         log.info("URL: " + url.getText());
 
-        Alert oKAlert = new Alert(Alert.AlertType.INFORMATION, "Request finished");
         animateProgressBar();
-        makeRequests(webClient, oKAlert);
-        oKAlert.show();
 
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                atomicStringReference.set(makeRequests(webClient));
+                return null;
+            }
+        };
 
+        task.setOnSucceeded(e -> {
+            Alert oKAlert = new Alert(Alert.AlertType.INFORMATION, "Request finished");
+            oKAlert.setContentText(atomicStringReference.get());
+            oKAlert.show();
+        });
+
+        new Thread(task).start();
     }
 
-    private void createPopUp() {
-        Popup popup = new Popup();
-        final Label hello = new Label();
-        final TextField name2 = new TextField();
-        Button ok = new Button("ok");
-        Button cencel = new Button("cancel");
 
-        final TextField name = new TextField();
-        Stage stageTheLabelBelongs = (Stage) button.getScene().getWindow();
-
-        VBox popUpVBox = new VBox();
-        popUpVBox.getChildren().add(hello);
-        popUpVBox.getChildren().add(name2);
-        popUpVBox.getChildren().add(ok);
-        popUpVBox.getChildren().add(cencel);
-
-        popup.getContent().addAll(name);
-        popup.getContent().addAll(popUpVBox);
-        popup.setAutoFix(false);
-        popup.setAutoHide( true );
-        popup.setHideOnEscape( true );
-        popup.setX(250);
-        popup.setY(175);
-        popup.show(stageTheLabelBelongs);
-        ok.setOnAction(t -> name.setText(name2.getText()));
-        cencel.setOnAction(t -> popup.hide());
-    }
-
-    private void makeRequests(WebClient webClient, Alert oKAlert) {
+    private String makeRequests(WebClient webClient) {
         HttpStatus status;
+        String statusReturn;
         int count = 0;
         log.debug("Doing the request");
         try {
@@ -87,20 +77,20 @@ public class FirstTestController {
             }
             while (status != HttpStatus.OK && count <= Integer.valueOf(retrytimes.getText()));
 
-            setStatusText(oKAlert, status);
+            statusReturn = setStatusText(status);
 
             log.debug("Status: " + status);
         } catch (Exception e) {
-            oKAlert.setContentText("Error");
+            statusReturn = "Error";
         }
-//        createPopUp();
+        return statusReturn;
     }
 
-    private void setStatusText(Alert oKAlert, HttpStatus status) {
+    private String setStatusText(HttpStatus status) {
         if (status == HttpStatus.OK) {
-            oKAlert.setContentText("Status  ok");
+            return "Status  ok";
         } else {
-            oKAlert.setContentText("Status not ok");
+            return "Status not ok";
         }
     }
 
