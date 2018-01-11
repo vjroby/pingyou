@@ -4,6 +4,7 @@ import de.felixroske.jfxsupport.FXMLController;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.text.Text;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,6 +29,8 @@ public class FirstTestController {
     private TextField retrytimes;
     @FXML
     private TextField retryInterval;
+    @FXML
+    private Text rcount;
 
     @FXML
     private ProgressBar progress;
@@ -39,6 +42,8 @@ public class FirstTestController {
 
     public void onPress() throws ExecutionException, InterruptedException {
         log.debug("Button pressed");
+        button.setDisable(true);
+
         infoLabel.setText("Requests are started.");
         WebClient webClient = WebClient.create(url.getText());
         log.info("URL: " + url.getText());
@@ -70,13 +75,14 @@ public class FirstTestController {
         log.debug("Doing the request");
         try {
             do {
-                status = webClient.get().exchange().block().statusCode();
+                status = doRequest(webClient);
                 count++;
+                rcount.setText(String.valueOf(count));
                 log.debug("count: " + count);
-                Thread.sleep(Integer.valueOf(retryInterval.getText()) * 10000);
+                Thread.sleep(Integer.valueOf(retryInterval.getText()) * 1000);
             }
-            while (status != HttpStatus.OK && count <= Integer.valueOf(retrytimes.getText()));
-
+            while (status != HttpStatus.OK && count < Integer.valueOf(retrytimes.getText()));
+            button.setDisable(false);
             statusReturn = setStatusText(status);
 
             log.debug("Status: " + status);
@@ -84,6 +90,16 @@ public class FirstTestController {
             statusReturn = "Error";
         }
         return statusReturn;
+    }
+
+    private HttpStatus doRequest(WebClient webClient) {
+        try {
+
+            return webClient.get().exchange().block().statusCode();
+        } catch (Exception e){
+            log.error(e.getLocalizedMessage());
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
     }
 
     private String setStatusText(HttpStatus status) {
