@@ -1,10 +1,12 @@
 package com.requester.pingyou.cotrollers;
 
 import de.felixroske.jfxsupport.FXMLController;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -48,8 +50,6 @@ public class FirstTestController {
         WebClient webClient = WebClient.create(url.getText());
         log.info("URL: " + url.getText());
 
-        animateProgressBar();
-
         Task<Void> task = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -62,6 +62,10 @@ public class FirstTestController {
             Alert oKAlert = new Alert(Alert.AlertType.INFORMATION, "Request finished");
             oKAlert.setContentText(atomicStringReference.get());
             oKAlert.show();
+
+            Stage stage = (Stage) oKAlert.getDialogPane().getScene().getWindow();
+            stage.setAlwaysOnTop(true);
+            stage.toFront();
         });
 
         new Thread(task).start();
@@ -77,14 +81,13 @@ public class FirstTestController {
             do {
                 status = doRequest(webClient);
                 count++;
-                rcount.setText(String.valueOf(count));
+                rcount.setText(String.valueOf(count) + " HTTP Status: " + status);
                 log.debug("count: " + count);
                 Thread.sleep(Integer.valueOf(retryInterval.getText()) * 1000);
             }
             while (status != HttpStatus.OK && count < Integer.valueOf(retrytimes.getText()));
             button.setDisable(false);
             statusReturn = setStatusText(status);
-
             log.debug("Status: " + status);
         } catch (Exception e) {
             statusReturn = "Error";
@@ -94,9 +97,8 @@ public class FirstTestController {
 
     private HttpStatus doRequest(WebClient webClient) {
         try {
-
             return webClient.get().exchange().block().statusCode();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
