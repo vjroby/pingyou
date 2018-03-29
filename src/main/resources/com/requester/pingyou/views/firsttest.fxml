@@ -10,7 +10,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<VBox prefHeight="293.0" prefWidth="491.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.requester.pingyou.cotrollers.FirstTestController">
+<VBox prefHeight="350.0" prefWidth="491.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.requester.pingyou.cotrollers.FirstTestController">
   <children>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="293.0" prefWidth="440.0" VBox.vgrow="ALWAYS">
       <children>
@@ -19,19 +19,25 @@
             <Font size="18.0" />
           </font>
         </Label>
-            <ButtonBar layoutX="208.0" layoutY="238.0" prefHeight="40.0" prefWidth="200.0">
+            <ButtonBar layoutX="208.0" layoutY="289.0" prefHeight="40.0" prefWidth="200.0">
                <buttons>
                   <Text fx:id="rcount" strokeType="OUTSIDE" strokeWidth="0.0" text="0" wrappingWidth="222.21875" />
                </buttons></ButtonBar>
             <ProgressBar fx:id="progress" layoutX="64.0" layoutY="14.0" prefHeight="20.0" prefWidth="352.0" progress="0.0" />
-            <TextField fx:id="url" layoutX="157.0" layoutY="164.0" promptText="URL" text="http://" />
-            <Label layoutX="87.0" layoutY="169.0" text="Insert URL" />
-          <Button fx:id="button" layoutX="185.0" layoutY="208.0" mnemonicParsing="false" onAction="#onPress" text="Do the request" />
-            <Label layoutX="84.0" layoutY="130.0" text="Retry times" />
-            <TextField fx:id="retrytimes" layoutX="156.0" layoutY="125.0" promptText="URL" text="10" />
-            <Label layoutX="72.0" layoutY="91.0" text="Retry interval" />
-            <TextField fx:id="retryInterval" layoutX="156.0" layoutY="86.0" promptText="URL" text="2" />
-            <Label layoutX="82.0" layoutY="249.0" text="Requests count" />
+            <TextField fx:id="url" layoutX="112.0" layoutY="84.0" prefHeight="27.0" prefWidth="352.0" promptText="URL" text="http://" />
+            <Label layoutX="14.0" layoutY="89.0" text="Insert URL" />
+          <Button fx:id="button" layoutX="185.0" layoutY="262.0" mnemonicParsing="false" onAction="#onPress" text="Do the request" />
+            <Label layoutX="143.0" layoutY="41.0" text="Retry times" />
+            <TextField fx:id="retrytimes" layoutX="225.0" layoutY="36.0" prefHeight="27.0" prefWidth="42.0" promptText="URL" text="10" />
+            <Label layoutX="14.0" layoutY="41.0" text="Retry interval" />
+            <TextField fx:id="retryInterval" layoutX="103.0" layoutY="36.0" prefHeight="27.0" prefWidth="33.0" promptText="URL" text="2" />
+            <Label layoutX="82.0" layoutY="301.0" text="Requests count" />
+            <Label layoutX="14.0" layoutY="121.0" text="Cookie" />
+            <TextField fx:id="cookie" layoutX="112.0" layoutY="116.0" prefHeight="27.0" prefWidth="352.0" />
+            <TextField fx:id="expectedText" layoutX="112.0" layoutY="148.0" />
+            <Label layoutX="14.0" layoutY="153.0" text="Expected Text" />
+            <Label layoutX="14.0" layoutY="182.0" text="Expected Status" />
+            <TextField fx:id="expectedStatus" layoutX="112.0" layoutY="177.0" prefHeight="27.0" prefWidth="82.0" />
       </children>
     </AnchorPane>
   </children>

@@ -1,7 +1,6 @@
 package com.requester.pingyou.cotrollers;
 
 import de.felixroske.jfxsupport.FXMLController;
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -9,6 +8,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.concurrent.ExecutionException;
@@ -32,6 +32,12 @@ public class FirstTestController {
     @FXML
     private TextField retryInterval;
     @FXML
+    private TextField cookie;
+    @FXML
+    private TextField expectedStatus;
+    @FXML
+    private TextField expectedText;
+    @FXML
     private Text rcount;
 
     @FXML
@@ -47,7 +53,9 @@ public class FirstTestController {
         button.setDisable(true);
 
         infoLabel.setText("Requests are started.");
-        WebClient webClient = WebClient.create(url.getText());
+
+
+        WebClient webClient = createWebClient();
         log.info("URL: " + url.getText());
 
         Task<Void> task = new Task<Void>() {
@@ -66,9 +74,23 @@ public class FirstTestController {
             Stage stage = (Stage) oKAlert.getDialogPane().getScene().getWindow();
             stage.setAlwaysOnTop(true);
             stage.toFront();
+            button.setDisable(false);
         });
 
         new Thread(task).start();
+    }
+
+    private WebClient createWebClient() {
+        String[] cookie = this.cookie.getText().split("=");
+
+        WebClient.Builder builder = WebClient.builder();
+
+        if (cookie.length == 2) {
+            builder.defaultCookie(cookie[0], cookie[1]);
+        }
+
+
+        return builder.baseUrl(url.getText()).build();
     }
 
 
@@ -77,35 +99,45 @@ public class FirstTestController {
         String statusReturn;
         int count = 0;
         log.debug("Doing the request");
+        HttpStatus expectedHttpStatus = (expectedStatus.getText().length() != 0)
+                ?  HttpStatus.valueOf(Integer.valueOf(expectedStatus.getText())) : HttpStatus.OK;
         try {
             do {
-                status = doRequest(webClient);
+                ClientResponse response = doRequest(webClient);
+                String responseString =  response.bodyToFlux(String.class).toString();
+                status = response.statusCode();
+                status = checkResponse(responseString, status);
                 count++;
                 rcount.setText(String.valueOf(count) + " HTTP Status: " + status);
                 log.debug("count: " + count);
                 Thread.sleep(Integer.valueOf(retryInterval.getText()) * 1000);
             }
-            while (status != HttpStatus.OK && count < Integer.valueOf(retrytimes.getText()));
+            while (status != expectedHttpStatus && count < Integer.valueOf(retrytimes.getText()));
             button.setDisable(false);
-            statusReturn = setStatusText(status);
+            statusReturn = setStatusText(status, expectedHttpStatus);
             log.debug("Status: " + status);
         } catch (Exception e) {
+            log.error("Error doing the request", e);
             statusReturn = "Error";
         }
         return statusReturn;
     }
 
-    private HttpStatus doRequest(WebClient webClient) {
-        try {
-            return webClient.get().exchange().block().statusCode();
-        } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
-            return HttpStatus.INTERNAL_SERVER_ERROR;
+    private HttpStatus checkResponse(String response, HttpStatus status){
+        if(expectedText.getText().length() > 0){
+            if(!response.contains( expectedText.getText())){
+               return HttpStatus.BAD_REQUEST;
+            }
         }
+        return status;
     }
 
-    private String setStatusText(HttpStatus status) {
-        if (status == HttpStatus.OK) {
+    private ClientResponse doRequest(WebClient webClient) {
+        return webClient.get().exchange().block();
+    }
+
+    private String setStatusText(HttpStatus status, HttpStatus expectedHttpStatus) {
+        if (status == expectedHttpStatus) {
             return "Status  ok";
         } else {
             return "Status not ok";
