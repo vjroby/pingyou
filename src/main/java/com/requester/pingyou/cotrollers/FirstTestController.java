@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,7 +56,6 @@ public class FirstTestController {
 
         infoLabel.setText("Requests are started.");
 
-
         WebClient webClient = createWebClient();
         log.info("URL: " + url.getText());
 
@@ -76,7 +77,6 @@ public class FirstTestController {
             stage.toFront();
             button.setDisable(false);
         });
-
         new Thread(task).start();
     }
 
@@ -88,8 +88,6 @@ public class FirstTestController {
         if (cookie.length == 2) {
             builder.defaultCookie(cookie[0], cookie[1]);
         }
-
-
         return builder.baseUrl(url.getText()).build();
     }
 
@@ -100,13 +98,13 @@ public class FirstTestController {
         int count = 0;
         log.debug("Doing the request");
         HttpStatus expectedHttpStatus = (expectedStatus.getText().length() != 0)
-                ?  HttpStatus.valueOf(Integer.valueOf(expectedStatus.getText())) : HttpStatus.OK;
+                ? HttpStatus.valueOf(Integer.valueOf(expectedStatus.getText())) : HttpStatus.OK;
         try {
             do {
                 ClientResponse response = doRequest(webClient);
-                String responseString =  response.bodyToFlux(String.class).toString();
                 status = response.statusCode();
-                status = checkResponse(responseString, status);
+                Mono<String> fluxString = response.bodyToMono(String.class);
+                status = checkResponse(fluxString, status);
                 count++;
                 rcount.setText(String.valueOf(count) + " HTTP Status: " + status);
                 log.debug("count: " + count);
@@ -123,17 +121,22 @@ public class FirstTestController {
         return statusReturn;
     }
 
-    private HttpStatus checkResponse(String response, HttpStatus status){
-        if(expectedText.getText().length() > 0){
-            if(!response.contains( expectedText.getText())){
-               return HttpStatus.BAD_REQUEST;
+    private HttpStatus checkResponse(Mono<String> response, HttpStatus status) {
+        if (expectedText.getText().length() > 0) {
+            Optional<String> check = Optional.ofNullable(response
+                    .filter(s -> s.contains(expectedText.getText()))
+                    .block());
+            if (!check.isPresent()) {
+                return HttpStatus.BAD_REQUEST;
             }
         }
         return status;
     }
 
     private ClientResponse doRequest(WebClient webClient) {
-        return webClient.get().exchange().block();
+        return webClient.get()
+                .exchange()
+                .block();
     }
 
     private String setStatusText(HttpStatus status, HttpStatus expectedHttpStatus) {
